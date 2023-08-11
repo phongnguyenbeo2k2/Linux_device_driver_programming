@@ -1,0 +1,1 @@
+cmd_/home/phong/work/ldd/custom_driver/001_hello_world_module/modules.order := {   echo /home/phong/work/ldd/custom_driver/001_hello_world_module/main.ko; :; } | awk '!x[$$0]++' - > /home/phong/work/ldd/custom_driver/001_hello_world_module/modules.order

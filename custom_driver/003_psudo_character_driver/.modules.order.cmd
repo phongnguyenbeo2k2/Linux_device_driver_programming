@@ -1,0 +1,1 @@
+cmd_/home/phong/work/ldd/custom_driver/003_psudo_character_driver/modules.order := {   echo /home/phong/work/ldd/custom_driver/003_psudo_character_driver/main_n.ko; :; } | awk '!x[$$0]++' - > /home/phong/work/ldd/custom_driver/003_psudo_character_driver/modules.order

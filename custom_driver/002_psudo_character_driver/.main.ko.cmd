@@ -1,0 +1,1 @@
+cmd_/home/phong/work/ldd/custom_driver/002_psudo_character_driver/main.ko := ld -r  -m elf_x86_64 -z noexecstack   --build-id=sha1  -T scripts/module.lds -o /home/phong/work/ldd/custom_driver/002_psudo_character_driver/main.ko /home/phong/work/ldd/custom_driver/002_psudo_character_driver/main.o /home/phong/work/ldd/custom_driver/002_psudo_character_driver/main.mod.o;  true
