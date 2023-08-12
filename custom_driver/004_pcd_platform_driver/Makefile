@@ -1,4 +1,4 @@
-obj-m:= pcd_device_set_up.o
+obj-m:= pcd_device_set_up.o pcd_platform_driver.o
 CROSS=/home/phong/work/BeagleBone_Green_wireless/bb-kernel/dl/gcc-8.5.0-nolibc/arm-linux-gnueabi/bin/arm-linux-gnueabi-
 KERNEL=/home/phong/work/BeagleBone_Green_wireless/bb-kernel/KERNEL/ 
 HOST_KERNEL = /lib/modules/$(shell uname -r)/build/

@@ -23,7 +23,7 @@ struct private_device_data pcd_device_data[2] =
 
 struct platform_device pcd_device_1 =
 {
-    .name = "pseudo_char_device_1",
+    .name = "pseudo_char_device",
     .id = 0,
     .dev = 
     {
@@ -34,7 +34,7 @@ struct platform_device pcd_device_1 =
 
 struct platform_device pcd_device_2 = 
 {
-    .name = "pseudo_char_device_2",
+    .name = "pseudo_char_device",
     .id = 1,
     .dev = 
     {
@@ -49,7 +49,7 @@ static int __init pcd_platform_device_init(void)
 
     platform_device_register(&pcd_device_1);
     platform_device_register(&pcd_device_2);
-    pr_info("The device set up is inserted\n");
+    pr_info("The device set up is loaded\n");
     return 0;
 }
 
@@ -57,7 +57,7 @@ static void __exit pcd_platform_device_exit(void)
 {
     platform_device_unregister(&pcd_device_1);
     platform_device_unregister(&pcd_device_2);
-    pr_info("The device set up is released\n");
+    pr_info("The device set up is unloaded\n");
 }
 
 module_init(pcd_platform_device_init);
