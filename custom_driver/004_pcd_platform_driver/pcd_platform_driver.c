@@ -8,9 +8,22 @@
 #include <linux/platform_device.h>
 
 #define AUTHOR "phong_foolish-gmail:phong.nguyenbeo2k2@hcmut.edu.vn"
+#define MAX_DEVICE 10
 
 #undef pr_fmt
 #define pr_fmt(fmt) "%s :"fmt,__func__
+
+/*driver private data structure*/
+struct pcdrv_private_data
+{
+	int total_devices;
+	/*This is hold device number of pseduo char device driver*/
+	dev_t device_number_base; /*hold base address of devices*/
+	struct class *pcd_class;
+	struct device *pcd_device;
+};
+
+struct pcdrv_private_data pcdrv_data;
 
 int check_permission(int dev_perm, int access_mode)
 {
@@ -83,14 +96,43 @@ struct platform_driver pcd_platform_driver =
 };
 static int __init pseudo_driver_init(void)
 {
-    platform_driver_register(&pcd_platform_driver);
+    /*1. allocate device number dynamically for device*/
+    int ret;
+    ret = alloc_chrdev_region(&pcdrv_data.device_number_base,0,MAX_DEVICE,"pcd");
+	if (ret < 0)
+	{
+		pr_err("Failure to init device number!\n");
+		return ret;
+	}
+    /*2. create folder under /sys/class*/
+    pcdrv_data.pcd_class = class_create(THIS_MODULE,"pcd_class");
+	if (IS_ERR(pcdrv_data.pcd_class))
+        {
+                pr_err("class creation failed!\n");
+                ret = PTR_ERR(pcdrv_data.pcd_class);
+                unregister_chrdev_region(pcdrv_data.device_number_base,MAX_DEVICE);
+        }
+    /*3. register platform driver*/
+    ret = platform_driver_register(&pcd_platform_driver);
+    if (ret < 0)
+    {
+        pr_err("Refister platform driver is failed");
+        class_destroy(pcdrv_data.pcd_class);
+        unregister_chrdev_region(pcdrv_data.device_number_base,MAX_DEVICE);
+        return ret;
+    }
     pr_info("The platform driver is added\n");
     return 0;
 }
 
 static void __exit pseudo_driver_cleanup(void)
 {
+    /*1. unregister platform driver */
     platform_driver_unregister(&pcd_platform_driver);
+    /*2. delete folder under /sys/class*/
+    class_destroy(pcdrv_data.pcd_class);
+    /*3. delete device number of devices*/
+    unregister_chrdev_region(pcdrv_data.device_number_base,MAX_DEVICE);
     pr_info("The platform driver is removed\n");
 }
 

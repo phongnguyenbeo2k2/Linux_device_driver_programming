@@ -5,6 +5,7 @@
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 
+/* This is a device of exercise*/
 #define DEV_MEM_SIZE 512
 char device_buffer[DEV_MEM_SIZE];
 /*pseudo char device driver */
@@ -87,7 +88,8 @@ ssize_t pcd_write (struct file *filp, const char __user *user_buff, size_t count
 	{
 		count = DEV_MEM_SIZE - *f_pos;
 	}
-	if (!(count))
+	/*Because count = 0 that is not enough memory to write data */
+	if (!(count)) 
 	{
 		pr_err("No space left on my device!\n");
 		return ENOMEM;
@@ -132,8 +134,8 @@ struct file_operations pcd_fops =
 struct class *pcd_class;
 
 struct device *pcd_device;
-#undef pr_fmt
-#define pr_fmt(fmt) "%s :"fmt,__func__
+#undef pr_fmt  /*because pr_fmt have defined in header file linux/printk.h so that i need to undefine it*/
+#define pr_fmt(fmt) "%s :"fmt,__func__ /*To show the line that is printed of what is function */
 
 static int __init pseudo_driver_init(void)
 {	
@@ -145,9 +147,10 @@ static int __init pseudo_driver_init(void)
 		pr_err("Failure to init device number!\n");
 		goto out;
 	}
-	pr_info ("major number is: %d, minor number is: %d ",MAJOR(device_number), MINOR(device_number));
+	/*MAJOR and MINOR marco in header file <linux/kdev_t>*/
+	pr_info ("major number is: %d, minor number is: %d ",MAJOR(device_number), MINOR(device_number)); 
 	/* 2. Initialize cdev structure with file operations pcd_fops*/
-	 cdev_init(&pcd_cdev, &pcd_fops);
+	cdev_init(&pcd_cdev, &pcd_fops);
 	/* 3. Register a device with VFS */
 	pcd_cdev.owner = THIS_MODULE;
 	ret = cdev_add(&pcd_cdev, device_number,1);
