@@ -27,7 +27,7 @@ struct pcdrv_private_data
 
 struct pcdev_private_data
 {
-    struct private_device_data *pdata;
+    struct private_device_data pdata;
     dev_t device_number;
     char *buffer;
     struct cdev pcd_cdev;
@@ -110,16 +110,16 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
     /*Save the pcd_received_data for else function can use it*/
     dev_set_drvdata(&pdev->dev,pcd_received_data);
     /*2.get data from received platform data*/
-    pcd_received_data->pdata->size = p_data->size;
-    pcd_received_data->pdata->serial_number = p_data->serial_number;
-    pcd_received_data->pdata->perm = p_data->perm;
+    pcd_received_data->pdata.size = p_data->size;
+    pcd_received_data->pdata.serial_number = p_data->serial_number;
+    pcd_received_data->pdata.perm = p_data->perm;
 
-    pr_info ("size of detected device is %d\n",pcd_received_data->pdata->size);
-    pr_info ("serial of detected device is %s\n ",pcd_received_data->pdata->serial_number);
-    pr_info ("permission of detected device is %d\n",pcd_received_data->pdata->perm);
+    pr_info ("size of detected device is %d\n",pcd_received_data->pdata.size);
+    pr_info ("serial number of detected device is %s\n ",pcd_received_data->pdata.serial_number);
+    pr_info ("permission of detected device is %d\n",pcd_received_data->pdata.perm);
    
     /*3. Dynamically allocate for buff field on struct pcdev_private_data*/
-    pcd_received_data->buffer = kzalloc(pcd_received_data->pdata->size,GFP_KERNEL);
+    pcd_received_data->buffer = kzalloc(pcd_received_data->pdata.size,GFP_KERNEL);
     if (!(pcd_received_data->buffer))
     {
         /*The buffer is memory of device*/
@@ -166,7 +166,7 @@ int pcd_platform_driver_remove(struct platform_device *pdev)
 {
     /* data */
     struct pcdev_private_data *pcd_received_data;
-    pcd_received_data = dev_get_drvdata(&pdev->dev);
+    pcd_received_data = (struct pcdev_private_data *)dev_get_drvdata(&pdev->dev);
     /*1. Remove a device that created by device_create API*/
     device_destroy(pcdrv_data.pcd_class, pcd_received_data->device_number);
     /*2. remove cdev that registered with VFS of kernel*/
