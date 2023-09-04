@@ -17,14 +17,14 @@ void pcd_release(struct device * dev)
 }
 struct private_device_data pcd_device_data[2] =
 {
-    [0] = {.perm = RDWR, .size = 512, .serial = "PCD00"},
-    [1] = {.perm = RDWR, .size = 1024,.serial = "PCD01"}
+    [0] = {.perm = RDWR, .size = 512, .serial_number = "PCD_0"},
+    [1] = {.perm = RDWR, .size = 1024,.serial_number = "PCD_1"}
 };
 
 struct platform_device pcd_device_1 =
 {
     .name = "pseudo_char_device",
-    .id = 0,
+    .id = 1,
     .dev = 
     {
         .platform_data = &pcd_device_data[0],
@@ -35,7 +35,7 @@ struct platform_device pcd_device_1 =
 struct platform_device pcd_device_2 = 
 {
     .name = "pseudo_char_device",
-    .id = 1,
+    .id = 2,
     .dev = 
     {
         .platform_data = &pcd_device_data[1],
@@ -46,7 +46,6 @@ struct platform_device pcd_device_2 =
 static int __init pcd_platform_device_init(void)
 {
     //register platform device
-
     platform_device_register(&pcd_device_1);
     platform_device_register(&pcd_device_2);
     pr_info("The device set up is loaded\n");

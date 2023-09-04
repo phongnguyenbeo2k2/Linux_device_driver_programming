@@ -5,7 +5,7 @@ struct private_device_data
 {
     int size;
     int perm;
-    const char serial[50];
+    const char *serial_number;
 };
 
 #define RDWR 0x11
