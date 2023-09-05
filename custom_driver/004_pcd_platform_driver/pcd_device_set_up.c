@@ -24,7 +24,7 @@ struct private_device_data pcd_device_data[2] =
 struct platform_device pcd_device_1 =
 {
     .name = "pseudo_char_device",
-    .id = 1,
+    .id = 0,
     .dev = 
     {
         .platform_data = &pcd_device_data[0],
@@ -35,7 +35,7 @@ struct platform_device pcd_device_1 =
 struct platform_device pcd_device_2 = 
 {
     .name = "pseudo_char_device",
-    .id = 2,
+    .id = 1,
     .dev = 
     {
         .platform_data = &pcd_device_data[1],

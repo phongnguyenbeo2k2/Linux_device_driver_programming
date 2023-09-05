@@ -51,7 +51,27 @@ int check_permission(int dev_perm, int access_mode)
 
 int pcd_open (struct inode *p_inode, struct file *filp)
 {
-	return 0;
+    struct pcdev_private_data *p_data;
+    int minor_number;
+    int major_number;
+    int ret;
+    /*1. Check whether the device file that you open*/
+    minor_number = MINOR(p_inode->i_rdev);
+    major_number = MAJOR(p_inode->i_rdev);
+    pr_info("major number: %d and minor number: %d",major_number, minor_number);
+    /*2. get specification information of device use contain_of API*/
+    p_data = container_of(p_inode->i_cdev, struct pcdev_private_data, pcd_cdev);
+    /*3. Save these specification information of device for read, write method*/
+    filp->private_data = p_data;
+    /*4. Check permission whether it is correct with device*/
+    ret = check_permission(p_data->pdata.perm, filp->f_mode);
+    if (!ret)
+	{
+		pr_info("open is successful\n");
+	}else {
+		pr_info ("open is unsuccessful\n");
+	}
+	return ret;
 }
 
 int pcd_release (struct inode *p_inode, struct file *filp)
@@ -61,7 +81,34 @@ int pcd_release (struct inode *p_inode, struct file *filp)
 
 ssize_t pcd_write (struct file *filp, const char __user *user_buff, size_t count, loff_t *f_pos)
 {
-    return -ENOMEM;
+    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
+    int max_size = p_data->pdata.size;
+	pr_info("write request that it need to write %zu bytes!\n",count);
+	pr_info ("current file positin is %lld\n", *f_pos);
+    /*1. check whether the number of bytes is written from user that exceed max_size of device*/
+    if ((*f_pos + count) > max_size)
+    {
+        count = max_size - *f_pos;
+    }
+
+    if (!(count))
+    {
+        pr_info("No space left in the device\n");
+        return -ENOMEM;
+    }
+    /*2. write count bytes from user space to device memory*/
+    if(copy_from_user(p_data->buffer + (*f_pos),user_buff,count))
+    {
+        pr_info("The process write down device that is failed\n");
+        return -EFAULT;
+    }
+    /*3. update the f_pos*/
+    *f_pos += count;
+    /*4. return result of write method*/
+    pr_info ("The number of bytes is wrote: %zu bytes \n",count);
+	pr_info ("current file position is %lld\n",*f_pos);
+	/*retun the numbe of bytes that write successfully*/
+	return count;
 }
 loff_t pcd_llseek (struct file *filp, loff_t off, int whence)
 {
@@ -69,7 +116,28 @@ loff_t pcd_llseek (struct file *filp, loff_t off, int whence)
 }
 ssize_t pcd_read (struct file *filp, char __user *user_buff, size_t count, loff_t *f_pos)
 {
-	return 0;
+    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
+    int max_size = p_data->pdata.size;
+	pr_info("read request that it need to write %zu bytes!\n",count);
+	pr_info ("current file position is %lld\n", *f_pos);
+    /*1. check whether the number of bytes is written from user that exceed max_size of device*/
+    if ((*f_pos + count) > max_size)
+    {
+        count = max_size - *f_pos;
+    }
+    /*2. write count bytes from user space to device memory*/
+    if(copy_to_user(user_buff,p_data->buffer +(*f_pos),count))
+    {
+        pr_info("The process write down device that is failed\n");
+        return -EFAULT;
+    }
+    /*3. update the f_pos*/
+    *f_pos += count;
+    /*4. return result of write method*/
+    pr_info ("The number of bytes is reead: %zu bytes \n",count);
+	pr_info ("current file position is %lld\n",*f_pos);
+	/*retun the number of bytes that write successfully*/
+	return count;   
 }
 
 
@@ -93,14 +161,14 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
     /*1. get platform data from platform_device
     Why do that ?
     Because the data that this function receive is able to incorrect. So that you should check it before use it*/
-    p_data = (struct private_device_data *)dev_get_platdata(&pdev->dev);
+    p_data = (struct private_device_data *)dev_get_platdata(&pdev->dev); /*api dev_get_platdata help me get platform data easily*/
     if(!p_data)
     {
         pr_info ("The received platform data isn't available\n");
         ret = -EINVAL;
         goto out;
     }
-    pcd_received_data = kzalloc(sizeof(*pcd_received_data),GFP_KERNEL);
+    pcd_received_data = devm_kzalloc(&pdev->dev,sizeof(*pcd_received_data),GFP_KERNEL);
     if (!pcd_received_data)
     {
         pr_info("Don't allocate memory");
@@ -119,7 +187,7 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
     pr_info ("permission of detected device is %d\n",pcd_received_data->pdata.perm);
    
     /*3. Dynamically allocate for buff field on struct pcdev_private_data*/
-    pcd_received_data->buffer = kzalloc(pcd_received_data->pdata.size,GFP_KERNEL);
+    pcd_received_data->buffer = devm_kzalloc(&pdev->dev,pcd_received_data->pdata.size,GFP_KERNEL);
     if (!(pcd_received_data->buffer))
     {
         /*The buffer is memory of device*/
@@ -154,9 +222,9 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
 cdev_delete:
     cdev_del(&pcd_received_data->pcd_cdev);
 free_buffer_of_device:
-    kfree(pcd_received_data->buffer);
+    devm_kfree(&pdev->dev,pcd_received_data->buffer);
 pcd_received_data_free:
-    kfree(pcd_received_data);
+    devm_kfree(&pdev->dev,pcd_received_data);
 out:
     pr_info("The probe is failed\n");
     return ret;
@@ -171,9 +239,10 @@ int pcd_platform_driver_remove(struct platform_device *pdev)
     device_destroy(pcdrv_data.pcd_class, pcd_received_data->device_number);
     /*2. remove cdev that registered with VFS of kernel*/
     cdev_del(&pcd_received_data->pcd_cdev);
-    /*3. free all memory is own device*/
-    kfree(pcd_received_data->buffer);
-    kfree(pcd_received_data);
+    // /*3. free all memory is own device*/ that is not need because when use devm_kmalloc so the kernel take care of freeing memory 
+    //   when device or driver is removed from system 
+    // kfree(pcd_received_data->buffer);
+    // kfree(pcd_received_data);
 
     pcdrv_data.total_devices--;
     pr_info("The device is removed\n");
