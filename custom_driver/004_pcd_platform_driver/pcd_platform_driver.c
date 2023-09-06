@@ -112,7 +112,42 @@ ssize_t pcd_write (struct file *filp, const char __user *user_buff, size_t count
 }
 loff_t pcd_llseek (struct file *filp, loff_t off, int whence)
 {
-    return 0;
+    /*determine whence from user space*/
+    loff_t temp;
+    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
+    int max_size = p_data->pdata.size;
+    pr_info("current file position is %lld\n", filp->f_pos);
+    switch (whence)
+    {
+    case SEEK_SET:
+        if ((off > max_size) || (off < 0))
+        {
+            return -EINVAL;
+        }
+        filp->f_pos = off;
+        break;
+    case SEEK_CUR:
+        temp = filp->f_pos + off;
+        if ((temp > max_size) || (temp < 0))
+        {
+            return -EINVAL;
+        }
+        filp->f_pos = temp;
+        break;
+    case SEEK_END:
+        temp = max_size +  off;
+        if ((temp > max_size) || (temp < 0))
+        {
+            return -EINVAL;
+        }
+        filp->f_pos = temp;
+        break;
+    default:
+        return -EINVAL;
+    }
+	pr_info("The new value of the file position is %lld\n",filp->f_pos);
+	return filp->f_pos;
+
 }
 ssize_t pcd_read (struct file *filp, char __user *user_buff, size_t count, loff_t *f_pos)
 {
