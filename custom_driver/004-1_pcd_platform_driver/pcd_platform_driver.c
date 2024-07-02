@@ -243,7 +243,9 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
     pr_info ("size of detected device is %d\n",pcd_received_data->pdata.size);
     pr_info ("serial number of detected device is %s\n ",pcd_received_data->pdata.serial_number);
     pr_info ("permission of detected device is %d\n",pcd_received_data->pdata.perm);
-
+    /*When matching between driver and device is sucessfully, so the id_entry variable of platform device will assigned with 
+    the id_table variable of platform driver. The detail operation in the function platform_match.
+    */
     pr_info("property 1 of %s is %d\n",pdev->name, pcdrv_device_data[pdev->id_entry->driver_data].property_1);
     pr_info("property 2 of %s is %d\n",pdev->name, pcdrv_device_data[pdev->id_entry->driver_data].property_2);
     /*3. Dynamically allocate for buff field on struct pcdev_private_data*/
