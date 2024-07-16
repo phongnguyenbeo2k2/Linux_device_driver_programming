@@ -8,7 +8,6 @@
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mod_devicetable.h>
-#include <linux/stdarg.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 
@@ -228,6 +227,7 @@ int phong_platform_driver_probe (struct platform_device *pdev)
     }
     driver_data = (long)match->data;
     /*Save the pcd_received_data for else function can use it*/
+    dev_drv_data = devm_kzalloc(dev,sizeof(device_drv_data_t), GFP_KERNEL);
     dev_drv_data->pdata.size = dev_data->size;
     dev_drv_data->pdata.serial_number = dev_data->serial_number;
     dev_drv_data->pdata.perm = dev_data->perm;
