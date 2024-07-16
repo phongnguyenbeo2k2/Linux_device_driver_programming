@@ -8,6 +8,18 @@ int create_attribute_file_sys(struct device *dev);
 /*create 2 variable of struct device_attribute*/
 static DEVICE_ATTR(max_size,S_IRUGO|S_IWUSR, max_size_show, max_size_store);
 static DEVICE_ATTR(serial_num, S_IRUGO, serial_num_show, NULL);
+
+struct attribute *pcd_attr[] = 
+{
+    &dev_attr_max_size.attr,
+    &dev_attr_serial_num.attr,
+    NULL
+};
+
+struct attribute_group pcd_attr_grp =
+{
+    .attrs = pcd_attr,
+};
 struct pcdrv_private_data pcdrv_data;
 
 struct platform_device_id pcd_ids[] = 
@@ -233,6 +245,7 @@ ssize_t serial_num_show(struct device *dev, struct device_attribute *attr,char *
 }
 int create_attribute_file_sys(struct device *dev)
 {
+#if 0
     int ret;
     ret = sysfs_create_file(&dev->kobj, &dev_attr_max_size.attr);
     if (ret < 0)
@@ -248,6 +261,9 @@ int create_attribute_file_sys(struct device *dev)
     }
 
     return 0;
+#endif
+    /*Using attribute group for creating attribute in the sys file system*/
+    return sysfs_create_group(&dev->kobj, &pcd_attr_grp);
 }
 module_init(pseudo_driver_init);
 module_exit(pseudo_driver_cleanup);
