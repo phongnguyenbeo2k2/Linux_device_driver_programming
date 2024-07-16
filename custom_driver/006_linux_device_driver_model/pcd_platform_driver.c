@@ -1,49 +1,24 @@
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/kdev_t.h>
-#include <linux/uaccess.h>
-#include "platform.h"
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/mod_devicetable.h>
+#include "pcd_platform_driver.h"
 
-#define AUTHOR "phong_foolish-gmail:phong.nguyenbeo2k2@hcmut.edu.vn"
-#define MAX_DEVICE 10
+/*declare prototype of show and store function of attribute*/
+ssize_t max_size_show(struct device *dev, struct device_attribute *attr,char *buf);
+ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+ssize_t serial_num_show(struct device *dev, struct device_attribute *attr,char *buf);
+int create_attribute_file_sys(struct device *dev);
+/*create 2 variable of struct device_attribute*/
+static DEVICE_ATTR(max_size,S_IRUGO|S_IWUSR, max_size_show, max_size_store);
+static DEVICE_ATTR(serial_num, S_IRUGO, serial_num_show, NULL);
 
-#undef pr_fmt
-#define pr_fmt(fmt) "%s :"fmt,__func__
-
-/*driver private data structure*/
-struct pcdrv_private_data
+struct attribute *pcd_attr[] = 
 {
-    /*The variable will allocate dynamically when device is detected*/
-	int total_devices;
-	/*This is hold device number of pseduo char device driver*/
-	dev_t device_number_base; /*hold base address of devices*/
-	struct class *pcd_class;
-	struct device *pcd_device;
-}; 
-
-struct pcdev_private_data
-{
-    struct private_device_data pdata;
-    dev_t device_number;
-    char *buffer;
-    struct cdev pcd_cdev;
-    
-};
-struct device_data
-{
-    int property_1;
-    int property_2;
+    &dev_attr_max_size.attr,
+    &dev_attr_serial_num.attr,
+    NULL
 };
 
-enum pcdev_name
+struct attribute_group pcd_attr_grp =
 {
-    DEVICEA1x,
-    DEVICEB1x
+    .attrs = pcd_attr,
 };
 struct pcdrv_private_data pcdrv_data;
 
@@ -59,144 +34,6 @@ struct device_data pcdrv_device_data[] =
     [DEVICEA1x] = {.property_1 = 12, .property_2 = 9},
     [DEVICEB1x] = {.property_1 = 9, .property_2 = 2002}
 };
-int check_permission(int dev_perm, int access_mode)
-{
-	if (dev_perm == RDWR)
-		return 0;
-	if (dev_perm == RDONLY && ((access_mode & FMODE_READ) && !(access_mode & FMODE_WRITE) ))
-	{
-		return 0;
-	}
-	if (dev_perm == WRONLY && ((access_mode & FMODE_WRITE) && !(access_mode & FMODE_READ)))
-		return 0;
-	return -EPERM;
-}
-
-int pcd_open (struct inode *p_inode, struct file *filp)
-{
-    struct pcdev_private_data *p_data;
-    int minor_number;
-    int major_number;
-    int ret;
-    /*1. Check whether the device file that you open*/
-    minor_number = MINOR(p_inode->i_rdev);
-    major_number = MAJOR(p_inode->i_rdev);
-    pr_info("major number: %d and minor number: %d",major_number, minor_number);
-    /*2. get specification information of device use contain_of API*/
-    p_data = container_of(p_inode->i_cdev, struct pcdev_private_data, pcd_cdev);
-    /*3. Save these specification information of device for read, write method*/
-    filp->private_data = p_data;
-    /*4. Check permission whether it is correct with device*/
-    ret = check_permission(p_data->pdata.perm, filp->f_mode);
-    if (!ret)
-	{
-		pr_info("open is successful\n");
-	}else {
-		pr_info ("open is unsuccessful\n");
-	}
-	return ret;
-}
-
-int pcd_release (struct inode *p_inode, struct file *filp)
-{	
-	return 0;
-}
-
-ssize_t pcd_write (struct file *filp, const char __user *user_buff, size_t count, loff_t *f_pos)
-{
-    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
-    int max_size = p_data->pdata.size;
-	pr_info("write request that it need to write %zu bytes!\n",count);
-	pr_info ("current file positin is %lld\n", *f_pos);
-    /*1. check whether the number of bytes is written from user that exceed max_size of device*/
-    if ((*f_pos + count) > max_size)
-    {
-        count = max_size - *f_pos;
-    }
-
-    if (!(count))
-    {
-        pr_info("No space left in the device\n");
-        return -ENOMEM;
-    }
-    /*2. write count bytes from user space to device memory*/
-    if(copy_from_user(p_data->buffer + (*f_pos),user_buff,count))
-    {
-        pr_info("The process write down device that is failed\n");
-        return -EFAULT;
-    }
-    /*3. update the f_pos*/
-    *f_pos += count;
-    /*4. return result of write method*/
-    pr_info ("The number of bytes is wrote: %zu bytes \n",count);
-	pr_info ("current file position is %lld\n",*f_pos);
-	/*retun the numbe of bytes that write successfully*/
-	return count;
-}
-loff_t pcd_llseek (struct file *filp, loff_t off, int whence)
-{
-    /*determine whence from user space*/
-    loff_t temp;
-    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
-    int max_size = p_data->pdata.size;
-    pr_info("current file position is %lld\n", filp->f_pos);
-    switch (whence)
-    {
-    case SEEK_SET:
-        if ((off > max_size) || (off < 0))
-        {
-            return -EINVAL;
-        }
-        filp->f_pos = off;
-        break;
-    case SEEK_CUR:
-        temp = filp->f_pos + off;
-        if ((temp > max_size) || (temp < 0))
-        {
-            return -EINVAL;
-        }
-        filp->f_pos = temp;
-        break;
-    case SEEK_END:
-        temp = max_size +  off;
-        if ((temp > max_size) || (temp < 0))
-        {
-            return -EINVAL;
-        }
-        filp->f_pos = temp;
-        break;
-    default:
-        return -EINVAL;
-    }
-	pr_info("The new value of the file position is %lld\n",filp->f_pos);
-	return filp->f_pos;
-
-}
-ssize_t pcd_read (struct file *filp, char __user *user_buff, size_t count, loff_t *f_pos)
-{
-    struct pcdev_private_data *p_data = (struct pcdev_private_data *)filp->private_data;
-    int max_size = p_data->pdata.size;
-	pr_info("read request that it need to write %zu bytes!\n",count);
-	pr_info ("current file position is %lld\n", *f_pos);
-    /*1. check whether the number of bytes is written from user that exceed max_size of device*/
-    if ((*f_pos + count) > max_size)
-    {
-        count = max_size - *f_pos;
-    }
-    /*2. write count bytes from user space to device memory*/
-    if(copy_to_user(user_buff,p_data->buffer +(*f_pos),count))
-    {
-        pr_info("The process write down device that is failed\n");
-        return -EFAULT;
-    }
-    /*3. update the f_pos*/
-    *f_pos += count;
-    /*4. return result of write method*/
-    pr_info ("The number of bytes is reead: %zu bytes \n",count);
-	pr_info ("current file position is %lld\n",*f_pos);
-	/*retun the number of bytes that write successfully*/
-	return count;   
-}
 
 
 struct file_operations pcd_fops = 
@@ -277,6 +114,15 @@ int pcd_platform_driver_probe (struct platform_device *pdev)
 		goto cdev_delete;
 	}
     pcdrv_data.total_devices++; /*total device that driver control*/
+
+    /*Create attribute in the sys file system*/
+    ret = create_attribute_file_sys(pcdrv_data.pcd_device);
+    if (ret < 0)
+    {
+        pr_err("Creating max_size and serial_num attribute is failed.\n");
+        device_destroy(pcdrv_data.pcd_class, pcd_received_data->device_number);
+        goto cdev_delete;
+    }
     pr_info("The probe function was successful\n");
     return 0;
 
@@ -364,6 +210,61 @@ static void __exit pseudo_driver_cleanup(void)
     pr_info("The platform driver is removed\n");
 }
 
+ssize_t max_size_show(struct device *dev, struct device_attribute *attr,char *buf)
+{    
+    struct pcdev_private_data *pcd_received_data;
+    pcd_received_data = (struct pcdev_private_data *)dev_get_drvdata(dev->parent);
+    pr_info ("The max size show method is called.\n");
+    return sprintf(buf, "%d\n",pcd_received_data->pdata.size);
+}
+ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+    struct pcdev_private_data *pcd_received_data;
+    long result;
+    int ret;
+    pcd_received_data = (struct pcdev_private_data *)dev_get_drvdata(dev->parent);
+    ret = kstrtol(buf, 10, &result);
+    if (ret < 0)
+    {
+        pr_err("Can't change the size of device!.\n");
+        return ret;
+    }
+    pr_info ("The changed size is %ld.\n",result);
+    pcd_received_data->pdata.size = (int)result;
+    pcd_received_data->buffer = krealloc(pcd_received_data->buffer, pcd_received_data->pdata.size, GFP_KERNEL);
+    pr_info("Max size store is called!.\n");
+    return count;
+}
+ssize_t serial_num_show(struct device *dev, struct device_attribute *attr,char *buf)
+{
+    /*This struct device *dev that not is represented of device, it's device directory which created in the /sys/class/xxx*/
+    struct pcdev_private_data *pcd_received_data;
+    pcd_received_data = (struct pcdev_private_data *)dev_get_drvdata(dev->parent);
+    pr_info("The serial num show method is called.\n");
+    return sprintf(buf, "%s\n", pcd_received_data->pdata.serial_number);
+}
+int create_attribute_file_sys(struct device *dev)
+{
+#if 0
+    int ret;
+    ret = sysfs_create_file(&dev->kobj, &dev_attr_max_size.attr);
+    if (ret < 0)
+    {
+        pr_err("Max size attribute is not created successfully.\n");
+        return ret;
+    }
+    ret = sysfs_create_file(&dev->kobj, &dev_attr_serial_num.attr);
+    if (ret < 0)
+    {
+        pr_err("Serial num attribute is not created suscessfully.\n");
+        return ret;
+    }
+
+    return 0;
+#endif
+    /*Using attribute group for creating attribute in the sys file system*/
+    return sysfs_create_group(&dev->kobj, &pcd_attr_grp);
+}
 module_init(pseudo_driver_init);
 module_exit(pseudo_driver_cleanup);
 
