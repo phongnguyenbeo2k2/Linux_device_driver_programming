@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "uaccess.h": "c"
+        "uaccess.h": "c",
+        "device.h": "c",
+        "of.h": "c"
     }
 }

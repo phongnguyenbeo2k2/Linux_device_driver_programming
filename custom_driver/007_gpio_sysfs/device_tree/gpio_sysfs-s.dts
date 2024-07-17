@@ -1,0 +1,7 @@
+/dts-v1/;
+/ {
+    bone_gpio_devs {
+        
+    }
+
+}; //root node
