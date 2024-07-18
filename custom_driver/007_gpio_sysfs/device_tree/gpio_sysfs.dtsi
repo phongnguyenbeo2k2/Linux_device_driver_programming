@@ -2,7 +2,6 @@
 / {
     bone_gpio_devs {
         compatible = "org,bone-gpio-sysfs";
-
         gpio_1{
             /*pin 7 on expansion P8: GPIO_66*/
             label = "gpio2.2";
@@ -10,9 +9,8 @@
         };
         gpio_2{
             /*pin 8 on expansion P8: GPIO_67*/
-            label = "gpio2.3"
+            label = "gpio2.3";
             bone-gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
         };
     };
-
-}; //root node
+};
