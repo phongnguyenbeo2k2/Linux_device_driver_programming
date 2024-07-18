@@ -18,7 +18,7 @@
 typedef struct 
 {
     char label[20];
-}gpio_drv_data_t;
+}gpiodev_drv_data_t;
 
 typedef struct
 {

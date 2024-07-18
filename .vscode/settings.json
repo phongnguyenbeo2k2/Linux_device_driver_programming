@@ -2,6 +2,7 @@
     "files.associations": {
         "uaccess.h": "c",
         "device.h": "c",
-        "of.h": "c"
+        "of.h": "c",
+        "typeinfo": "c"
     }
 }

@@ -64,6 +64,34 @@ static void __exit gpio_sysfs_exit(void)
 }
 int gpio_sysfs_probe (struct platform_device *pdev)
 {
+    int i = 1;
+    int ret;
+    struct device *dev = &pdev->dev;
+    /*That is parent device node. In this case, that is "bone_gpio_devs" node*/
+    struct device_node *parent = pdev->dev.of_node;
+    struct device_node *child = NULL;
+    const char *label_name;
+    gpiodev_drv_data_t *gpio_drv_data;
+    /*This is macro function which point to available node (node have status is "okey")*/
+    for_each_available_child_of_node(parent, child)
+    {
+        gpio_drv_data = devm_kzalloc(dev, sizeof(gpiodev_drv_data_t), GFP_KERNEL);
+        if (gpio_drv_data == NULL)
+        {
+            pr_err("Error occur: when can not allocate memory for gpio_drv_data variable.\n");
+            return -ENOMEM;
+        }
+        ret = of_property_read_string(child, "label", &label_name);
+        if (ret < 0)
+        {
+            dev_warn(dev, "Don't get label information of gpio.\n");
+            snprintf(gpio_drv_data->label, sizeof(gpio_drv_data->label), "unknow-gpio%d",i);
+        }else 
+        {
+            strcpy(gpio_drv_data->label, label_name);
+            dev_info(dev, "GPIO label = %s.\n",gpio_drv_data->label);
+        }
+    }
     return 0;
 }
 int gpio_sysfs_remove (struct platform_device *pdev)
