@@ -92,10 +92,12 @@ int gpio_sysfs_probe (struct platform_device *pdev)
             dev_info(dev, "GPIO label = %s.\n",gpio_drv_data->label);
         }
     }
+    pr_info("The gpio device is matched!\n");
     return 0;
 }
 int gpio_sysfs_remove (struct platform_device *pdev)
 {
+    pr_info("The gpio device is removed!\n");
     return 0;
 }
 /*Register the init and exit function with kernel*/
