@@ -70,7 +70,7 @@ int gpio_sysfs_probe (struct platform_device *pdev)
     /*That is parent device node. In this case, that is "bone_gpio_devs" node*/
     struct device_node *parent = pdev->dev.of_node;
     struct device_node *child = NULL;
-    const char *label_name;
+    const char *label_name; 
     gpiodev_drv_data_t *gpio_drv_data;
     /*This is macro function which point to available node (node have status is "okey")*/
     for_each_available_child_of_node(parent, child)
