@@ -11,7 +11,6 @@
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mod_devicetable.h>
-#include <linux/stdarg.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 

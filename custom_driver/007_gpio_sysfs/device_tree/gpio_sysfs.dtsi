@@ -1,4 +1,4 @@
-/dts-v1/;
+
 / {
     bone_gpio_devs {
         compatible = "org,bone-gpio-sysfs";
