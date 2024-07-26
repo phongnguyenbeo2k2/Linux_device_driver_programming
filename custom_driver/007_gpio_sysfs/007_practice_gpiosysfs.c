@@ -172,29 +172,68 @@ int gpio_sysfs_remove (struct platform_device *pdev)
 }
 ssize_t direction_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
+    gpiodev_drv_data_t *gpio_dev_drv_data = (gpiodev_drv_data_t *)dev_get_drvdata(dev);
+    int dir;
+    char *direction;
+    dir = gpiod_get_direction(gpio_dev_drv_data->desc);
+    if (dir < 0)
+    {
+        return dir;
+    }
+    /* if dir = 0 , then show "out". if dir =1 , then show "in" */
+    direction = (dir == 0) ? "out" : "in";
     pr_info("Direction show is called.\n");
-    return 0;
+    return sprintf(buf, "%s\n", direction);
 }
 ssize_t direction_store(struct device *dev, struct device_attribute *attr,const char *buf, size_t count)
 {
+    int ret;
+    gpiodev_drv_data_t *gpio_dev_drv_data = (gpiodev_drv_data_t *)dev_get_drvdata(dev);
+    if (sysfs_streq(buf, "in"))
+    {
+        ret = gpiod_direction_input(gpio_dev_drv_data->desc);
+    }else if (sysfs_streq(buf, "out"))
+    {
+        ret = gpiod_direction_output(gpio_dev_drv_data->desc, OFF);
+    }else 
+    {
+        ret = -EINVAL;
+    }
     pr_info("Direction store is called.\n");
-    return count;
+    if (ret == 0)
+        return count;
+    else 
+        return ret;
 }
 
 ssize_t value_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
+    gpiodev_drv_data_t *gpio_dev_drv_data = (gpiodev_drv_data_t *)dev_get_drvdata(dev);
+    int value;
+    value = gpiod_get_value(gpio_dev_drv_data->desc);
     pr_info("Value show is called.\n");
-    return 0;
+    return sprintf(buf, "%d\n", value);
 }
 ssize_t value_store(struct device *dev, struct device_attribute *attr,const char *buf, size_t count)
 {
+    gpiodev_drv_data_t *gpio_dev_drv_data = (gpiodev_drv_data_t *)dev_get_drvdata(dev);
+    int ret;
+    long value;
+    ret = kstrtol(buf,0,&value);
+    if (ret < 0)
+    {
+        pr_err("Can't set value for gpio.\n");
+        return ret;
+    }
+    gpiod_set_value(gpio_dev_drv_data->desc, value);   
     pr_info("Value store is called.\n");
     return count;
 }
 ssize_t label_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
+    gpiodev_drv_data_t *gpio_dev_drv_data = (gpiodev_drv_data_t *)dev_get_drvdata(dev);
     pr_info("Label show is called.\n");
-    return 0;
+    return sprintf(buf,"%s\n",gpio_dev_drv_data->label);
 }
 /*Register the init and exit function with kernel*/
 module_init(gpio_sysfs_init);
