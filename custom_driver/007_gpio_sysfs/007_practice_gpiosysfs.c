@@ -178,7 +178,7 @@ ssize_t direction_show(struct device *dev, struct device_attribute *attr,char *b
 ssize_t direction_store(struct device *dev, struct device_attribute *attr,const char *buf, size_t count)
 {
     pr_info("Direction store is called.\n");
-    return 0;
+    return count;
 }
 
 ssize_t value_show(struct device *dev, struct device_attribute *attr,char *buf)
@@ -189,7 +189,7 @@ ssize_t value_show(struct device *dev, struct device_attribute *attr,char *buf)
 ssize_t value_store(struct device *dev, struct device_attribute *attr,const char *buf, size_t count)
 {
     pr_info("Value store is called.\n");
-    return 0;
+    return count;
 }
 ssize_t label_show(struct device *dev, struct device_attribute *attr,char *buf)
 {
