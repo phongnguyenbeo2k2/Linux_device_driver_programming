@@ -1,0 +1,68 @@
+
+/ {
+    bone_gpio_devs {
+        compatible = "org,bone-gpio-sysfs";
+		pinctrl-single,names = "default";
+		pinctrl-0 = <&ex_8_gpios>;
+        gpio_1{
+            /*pin 7 on expansion P8: GPIO_66*/
+            label = "gpio2.2";
+            bone-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_2{
+            /*pin 8 on expansion P8: GPIO_67*/
+            label = "gpio2.3";
+            bone-gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_3{
+            /*pin 45 on expansion P8*/
+            label = "gpio2.6-RS";
+            bone-gpios = <&gpio2 6 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_4{
+            /*pin 46 on expansion P8*/
+            label = "gpio2.7-RW";
+            bone-gpios = <&gpio2 7 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_5{
+            /*pin 43 on expansion P8*/
+            label = "gpio2.8-EN";
+            bone-gpios = <&gpio2 8 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_6{
+            /*pin 44 on expansion P8*/
+            label = "gpio2.9-D4";
+            bone-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_7{
+            /*pin 41 on expansion P8*/
+            label = "gpio2.10-D5";
+            bone-gpios = <&gpio2 10 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_8{
+            /*pin 42 on expansion P8*/
+            label = "gpio2.11-D6";
+            bone-gpios = <&gpio2 11 GPIO_ACTIVE_HIGH>;
+        };
+        gpio_9{
+            /*pin 39 on expansion P8*/
+            label = "gpio2.12-D7";
+            bone-gpios = <&gpio2 12 GPIO_ACTIVE_HIGH>;
+        };
+    };//bone gpio device (client device node as slide mentioned)
+};
+
+&am33xx_pinmux{
+    ex_8_gpios: bone_ex_8{ 
+        pinctrl-single,pins = <
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA0,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA1,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA2,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA3,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA4,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA5,PIN_OUTPUT,MUX_MODE7)
+        AM33XX_PADCONF(AM335X_PIN_LCD_DATA6,PIN_OUTPUT,MUX_MODE7)
+        >;
+    }; // pin configuration node for lcd at exercise 8
+}; // pin controller node of am335x soc 
+// in this device tree, the content will different with course. Because I use beagle bone green wireless, not black.
