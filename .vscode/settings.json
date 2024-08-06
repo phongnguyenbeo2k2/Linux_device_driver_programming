@@ -3,6 +3,9 @@
         "uaccess.h": "c",
         "device.h": "c",
         "of.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "gpio.h": "c",
+        "stdarg.h": "c",
+        "unistd.h": "c"
     }
 }
